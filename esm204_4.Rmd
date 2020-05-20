@@ -1,0 +1,77 @@
+---
+title: "ESM 204 Assignment 4"
+author: "Madeline Oliver"
+date: "5/19/2020"
+output: html_document
+---
+
+```{r setup, echo = FALSE, message = FALSE, warning = FALSE, cache = FALSE}
+knitr::opts_chunk$set(echo = FALSE, message = FALSE, warning = FALSE, cache = FALSE)
+
+library(tidyverse)
+library(here)
+library(janitor)
+library(lubridate)
+library(chron)
+library(stringr)
+```
+
+
+```{r}
+temp_yr <- function(t, T){T_t <- min(T*t/100, T) 
+  return(T_t)
+}
+
+t <- 0:200
+T <- 5
+
+hello <- temp_yr(t, T)
+```
+
+
+```{r}
+econ_yr <- function(t){K_t <- exp(-b*T*(t^2)) 
+  return(K_t)
+}
+```
+
+
+```{r}
+tot_consumption_yr <- function(t){C_t <- K_t*exp(gt) 
+  return(C_t)
+}
+```
+
+
+```{r}
+soc_utility <- function(C){U_C <- (C^(1-n))/(1-n)
+  return(U_C)
+}
+```
+
+
+```{r}
+ramsey <- function(r){r <- d + n*g
+  return(r)
+}
+```
+
+```{r}
+# Set base case parameters
+d <- .005
+n <- .5
+g <- .01
+b <- .05
+```
+
+```{r}
+t <- 0:200
+T <- 0
+ggplot() +
+  stat_function(aes(t, T), color = "#8dd3c7", fun = temp_yr, 
+                size = 1)
+```
+
+
+
+
