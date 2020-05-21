@@ -18,59 +18,82 @@ library(stringr)
 
 
 ```{r}
-temp_yr <- function(t, T){T_t <- min(T*t/100, T) 
-  return(T_t)
-}
-
+# Assign values
+T_low <- 0
+T_med <- 2
+T_high <- 8
+T_4.4 <- 4.4
 t <- 0:200
-T <- 5
-
-hello <- temp_yr(t, T)
-```
-
-
-```{r}
-econ_yr <- function(t){K_t <- exp(-b*T*(t^2)) 
-  return(K_t)
-}
-```
-
-
-```{r}
-tot_consumption_yr <- function(t){C_t <- K_t*exp(gt) 
-  return(C_t)
-}
-```
-
-
-```{r}
-soc_utility <- function(C){U_C <- (C^(1-n))/(1-n)
-  return(U_C)
-}
-```
-
-
-```{r}
-ramsey <- function(r){r <- d + n*g
-  return(r)
-}
-```
-
-```{r}
-# Set base case parameters
-d <- .005
+o <- 0.005
 n <- .5
 g <- .01
 b <- .05
 ```
 
+
 ```{r}
-t <- 0:200
-T <- 0
-ggplot() +
-  stat_function(aes(t, T), color = "#8dd3c7", fun = temp_yr, 
-                size = 1)
+# Build functions in this chunk
+temp <- function(t, T) {temp = pmin(T*t/100, T)}
+econ <- function(t) {econ = exp(-1*b*t^2)}
+consumption <- function(k, t) {k*exp(g*t)}
+utility <- function(c) {(c^(1-n))/(1-n)}
+discount_rate <- o + n*g
 ```
+
+```{r}
+# Build data frames for each scenario
+T_00 <- data.frame(temp_increase = T_low,
+                   year = t,
+                   temp = temp(t, T_low)) %>% 
+  mutate(economy = econ(temp)) %>% 
+  mutate(consumption = consumption(economy, year)) %>% 
+  mutate(utility = utility(consumption)) %>% 
+  mutate(pv_utility = utility/(1+discount_rate)^year)
+T_02 <- data.frame(temp_increase = T_med,
+                   year = t,
+                   temp = temp(t, T_med)) %>% 
+  mutate(economy = econ(temp)) %>% 
+  mutate(consumption = consumption(economy, year)) %>% 
+  mutate(utility = utility(consumption))
+T_08 <- data.frame(temp_increase = T_high,
+                   year = t,
+                   temp = temp(t, T_high)) %>% 
+  mutate(economy = econ(temp)) %>% 
+  mutate(consumption = consumption(economy, year)) %>% 
+  mutate(utility = utility(consumption)) 
+T_04.4 <- data.frame(temp_increase = T_4.4,
+                   year = t,
+                   temp = temp(t, T_4.4)) %>% 
+  mutate(economy = econ(temp)) %>% 
+  mutate(consumption = consumption(economy, year)) %>% 
+  mutate(utility = utility(consumption)) %>% 
+  mutate(pv_utility = utility/(1+discount_rate)^year) %>% 
+  data.frame(T_00$pv_utility) %>% 
+  mutate(pct_change = (pv_utility - T_00.pv_utility)/T_00.pv_utility*100)
+```
+
+```{r}
+# Plot everything using data frames created above
+# Temperature
+ggplot()+
+  geom_line(data = T_00, aes(x = year, y = temp), size = 1, color = "purple")+
+  geom_line(data = T_02, aes(x = year, y = temp), size = 1, color = "red")+
+  geom_line(data = T_08, aes(x = year, y = temp), size = 1, color = "blue")
+# Consumption
+ggplot()+
+  geom_line(data = T_00, aes(x = year, y = consumption), 
+            size = 1, color = "purple")+
+  geom_line(data = T_02, aes(x = year, y = consumption), 
+            size = 1, color = "red")+
+  geom_line(data = T_08, aes(x = year, y = consumption), 
+            size = 1, color = "blue")
+# Utility
+ggplot()+
+  geom_line(data = T_00, aes(x = year, y = utility), size = 1, color = "purple")+
+  geom_line(data = T_02, aes(x = year, y = utility), size = 1, color = "red")+
+  geom_line(data = T_08, aes(x = year, y = utility), size = 1, color = "blue")
+```
+
 
 
 
