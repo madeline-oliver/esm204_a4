@@ -16,20 +16,28 @@ library(chron)
 library(stringr)
 ```
 
+Equations:
+temp = temperature in year t
+econ = the fraction of economic activity that is retained in a year if the temp is "temp"
+consumption = total consumption at time t
+utility = society's utility from consumption
+Ramsey rule:
+  o = pure rate of time preference
+  g = growth rate of income over time
+  n = elasticity of marginal utility of consumption with respect to income (how much more does a poor person value a dollar compared to a rich person?)
 
 ```{r}
 # Assign values
 T_low <- 0
 T_med <- 2
 T_high <- 8
-T_4.4 <- 4.4
+T_bau <- 4.4
 t <- 0:200
 o <- 0.005
 n <- .5
 g <- .01
 b <- .05
 ```
-
 
 ```{r}
 # Build functions in this chunk
@@ -49,50 +57,332 @@ T_00 <- data.frame(temp_increase = T_low,
   mutate(consumption = consumption(economy, year)) %>% 
   mutate(utility = utility(consumption)) %>% 
   mutate(pv_utility = utility/(1+discount_rate)^year)
+
 T_02 <- data.frame(temp_increase = T_med,
                    year = t,
                    temp = temp(t, T_med)) %>% 
   mutate(economy = econ(temp)) %>% 
   mutate(consumption = consumption(economy, year)) %>% 
   mutate(utility = utility(consumption))
+
 T_08 <- data.frame(temp_increase = T_high,
                    year = t,
                    temp = temp(t, T_high)) %>% 
   mutate(economy = econ(temp)) %>% 
   mutate(consumption = consumption(economy, year)) %>% 
   mutate(utility = utility(consumption)) 
-T_04.4 <- data.frame(temp_increase = T_4.4,
+
+T_04.4 <- data.frame(temp_increase = T_bau,
                    year = t,
-                   temp = temp(t, T_4.4)) %>% 
+                   temp = temp(t, T_bau)) %>% 
   mutate(economy = econ(temp)) %>% 
   mutate(consumption = consumption(economy, year)) %>% 
   mutate(utility = utility(consumption)) %>% 
   mutate(pv_utility = utility/(1+discount_rate)^year) %>% 
   data.frame(T_00$pv_utility) %>% 
   mutate(pct_change = (pv_utility - T_00.pv_utility)/T_00.pv_utility*100)
+
+L <- data.frame(sum(T_04.4$T_00.pv_utility),
+                           sum(T_04.4$pv_utility)) %>%
+  rename(pv_utility_base = sum.T_04.4.T_00.pv_utility.,
+         pv_utility_bau = sum.T_04.4.pv_utility.) %>%
+  mutate(L = (pv_utility_bau - pv_utility_base)/pv_utility_base)
+
 ```
 
 ```{r}
 # Plot everything using data frames created above
 # Temperature
 ggplot()+
-  geom_line(data = T_00, aes(x = year, y = temp), size = 1, color = "purple")+
-  geom_line(data = T_02, aes(x = year, y = temp), size = 1, color = "red")+
-  geom_line(data = T_08, aes(x = year, y = temp), size = 1, color = "blue")
+  geom_line(data = T_00, aes(x = year, y = temp, color = "No Climate Change"), size = 1)+
+  geom_line(data = T_02, aes(x = year, y = temp, color  = "Modest Climate Change"), size = 1)+
+  geom_line(data = T_08, aes(x = year, y = temp, color = "Extreme Climate Change"), size = 1) +
+  labs(title = "Temperature over time under various climate scenarios",
+       color = "Climate Scenario") +
+  scale_color_manual(values = c("orangered4", "orangered", "orange")) +
+  theme(plot.title = element_text(
+    family = "Times",
+    face = "bold",
+    size = 12))
+
 # Consumption
 ggplot()+
-  geom_line(data = T_00, aes(x = year, y = consumption), 
-            size = 1, color = "purple")+
-  geom_line(data = T_02, aes(x = year, y = consumption), 
-            size = 1, color = "red")+
-  geom_line(data = T_08, aes(x = year, y = consumption), 
-            size = 1, color = "blue")
+  geom_line(data = T_00, aes(x = year, y = consumption, color = "No Climate Change"), 
+            size = 1)+
+  geom_line(data = T_02, aes(x = year, y = consumption, color = "Modest Climate Change"), 
+            size = 1)+
+  geom_line(data = T_08, aes(x = year, y = consumption, color = "Extreme Climate Change"), 
+            size = 1) +
+  labs(title = "Consumption over time under various climate scenarios",
+       color = "Climate Scenario") +
+  scale_color_manual(values = c("orangered4", "orangered", "orange")) +
+  theme(plot.title = element_text(
+    family = "Times",
+    face = "bold",
+    size = 12))
+  
 # Utility
 ggplot()+
-  geom_line(data = T_00, aes(x = year, y = utility), size = 1, color = "purple")+
-  geom_line(data = T_02, aes(x = year, y = utility), size = 1, color = "red")+
-  geom_line(data = T_08, aes(x = year, y = utility), size = 1, color = "blue")
+  geom_line(data = T_00, aes(x = year, y = utility,  color = "No Climate Change"), size = 1)+
+  geom_line(data = T_02, aes(x = year, y = utility, color = "Modest Climate Change"), size = 1)+
+  geom_line(data = T_08, aes(x = year, y = utility, color = "Extreme Climate Change"), size = 1) +
+  labs(title = "Undiscounted utility over time under various climate scenarios",
+       color = "Climate Scenario") +
+  scale_color_manual(values = c("orangered4", "orangered", "orange")) +
+  theme(plot.title = element_text(
+    family = "Times",
+    face = "bold",
+    size = 12))
 ```
+
+
+Formula for present value:
+net utility today = SUM[utility at year t / (1+discount_rate)^t] across all years
+
+
+
+Part 2.B.
+
+10% increase o
+```{r}
+# Assign values
+T_low <- 0
+T_med <- 2
+T_high <- 8
+T_bau <- 4.4
+t <- 0:200
+o <- 0.005*1.1
+n <- .5
+g <- .01
+b <- .05
+# Build functions in this chunk
+temp <- function(t, T) {temp = pmin(T*t/100, T)}
+econ <- function(t) {econ = exp(-1*b*t^2)}
+consumption <- function(k, t) {k*exp(g*t)}
+utility <- function(c) {(c^(1-n))/(1-n)}
+discount_rate <- o + n*g
+# Build data frames for each scenario
+T_00 <- data.frame(temp_increase = T_low,
+                   year = t,
+                   temp = temp(t, T_low)) %>% 
+  mutate(economy = econ(temp)) %>% 
+  mutate(consumption = consumption(economy, year)) %>% 
+  mutate(utility = utility(consumption)) %>% 
+  mutate(pv_utility = utility/(1+discount_rate)^year)
+
+T_04.4 <- data.frame(temp_increase = T_bau,
+                   year = t,
+                   temp = temp(t, T_bau)) %>% 
+  mutate(economy = econ(temp)) %>% 
+  mutate(consumption = consumption(economy, year)) %>% 
+  mutate(utility = utility(consumption)) %>% 
+  mutate(pv_utility = utility/(1+discount_rate)^year) %>% 
+  data.frame(T_00$pv_utility) %>% 
+  mutate(pct_change = (pv_utility - T_00.pv_utility)/T_00.pv_utility*100)
+
+L_o <- data.frame(sum(T_04.4$T_00.pv_utility),
+                           sum(T_04.4$pv_utility)) %>%
+  rename(pv_utility_base = sum.T_04.4.T_00.pv_utility.,
+         pv_utility_bau = sum.T_04.4.pv_utility.) %>%
+  mutate(L_o = (pv_utility_bau - pv_utility_base)/pv_utility_base) %>%
+  mutate(L = L$L) %>%
+  mutate(elasticity = .1/(L_o-L/L))
+```
+
+
+10% increase in n
+
+```{r}
+# Assign values
+T_low <- 0
+T_med <- 2
+T_high <- 8
+T_bau <- 4.4
+t <- 0:200
+o <- 0.005
+n <- .5*1.1
+g <- .01
+b <- .05
+# Build functions in this chunk
+temp <- function(t, T) {temp = pmin(T*t/100, T)}
+econ <- function(t) {econ = exp(-1*b*t^2)}
+consumption <- function(k, t) {k*exp(g*t)}
+utility <- function(c) {(c^(1-n))/(1-n)}
+discount_rate <- o + n*g
+# Build data frames for each scenario
+T_00 <- data.frame(temp_increase = T_low,
+                   year = t,
+                   temp = temp(t, T_low)) %>% 
+  mutate(economy = econ(temp)) %>% 
+  mutate(consumption = consumption(economy, year)) %>% 
+  mutate(utility = utility(consumption)) %>% 
+  mutate(pv_utility = utility/(1+discount_rate)^year)
+
+T_04.4 <- data.frame(temp_increase = T_bau,
+                   year = t,
+                   temp = temp(t, T_bau)) %>% 
+  mutate(economy = econ(temp)) %>% 
+  mutate(consumption = consumption(economy, year)) %>% 
+  mutate(utility = utility(consumption)) %>% 
+  mutate(pv_utility = utility/(1+discount_rate)^year) %>% 
+  data.frame(T_00$pv_utility) %>% 
+  mutate(pct_change = (pv_utility - T_00.pv_utility)/T_00.pv_utility*100)
+
+L_n <- data.frame(sum(T_04.4$T_00.pv_utility),
+                           sum(T_04.4$pv_utility)) %>%
+  rename(pv_utility_base = sum.T_04.4.T_00.pv_utility.,
+         pv_utility_bau = sum.T_04.4.pv_utility.) %>%
+  mutate(L_n = (pv_utility_bau - pv_utility_base)/pv_utility_base) %>%
+  mutate(L = L$L) %>%
+  mutate(elasticity = .1/(L_n-L/L))
+```
+
+10% increase in g
+```{r}
+# Assign values
+T_low <- 0
+T_med <- 2
+T_high <- 8
+T_bau <- 4.4
+t <- 0:200
+o <- 0.005
+n <- .5
+g <- .01*1.1
+b <- .05
+# Build functions in this chunk
+temp <- function(t, T) {temp = pmin(T*t/100, T)}
+econ <- function(t) {econ = exp(-1*b*t^2)}
+consumption <- function(k, t) {k*exp(g*t)}
+utility <- function(c) {(c^(1-n))/(1-n)}
+discount_rate <- o + n*g
+# Build data frames for each scenario
+T_00 <- data.frame(temp_increase = T_low,
+                   year = t,
+                   temp = temp(t, T_low)) %>% 
+  mutate(economy = econ(temp)) %>% 
+  mutate(consumption = consumption(economy, year)) %>% 
+  mutate(utility = utility(consumption)) %>% 
+  mutate(pv_utility = utility/(1+discount_rate)^year)
+
+T_04.4 <- data.frame(temp_increase = T_bau,
+                   year = t,
+                   temp = temp(t, T_bau)) %>% 
+  mutate(economy = econ(temp)) %>% 
+  mutate(consumption = consumption(economy, year)) %>% 
+  mutate(utility = utility(consumption)) %>% 
+  mutate(pv_utility = utility/(1+discount_rate)^year) %>% 
+  data.frame(T_00$pv_utility) %>% 
+  mutate(pct_change = (pv_utility - T_00.pv_utility)/T_00.pv_utility*100)
+
+L_g <- data.frame(sum(T_04.4$T_00.pv_utility),
+                           sum(T_04.4$pv_utility)) %>%
+  rename(pv_utility_base = sum.T_04.4.T_00.pv_utility.,
+         pv_utility_bau = sum.T_04.4.pv_utility.) %>%
+  mutate(L_g = (pv_utility_bau - pv_utility_base)/pv_utility_base) %>%
+  mutate(L = L$L) %>%
+  mutate(elasticity = .1/(L_g-L/L))
+```
+
+
+
+10% increase in b
+```{r}
+# Assign values
+T_low <- 0
+T_med <- 2
+T_high <- 8
+T_bau <- 4.4
+t <- 0:200
+o <- 0.005
+n <- .5
+g <- .01
+b <- .05*1.1
+# Build functions in this chunk
+temp <- function(t, T) {temp = pmin(T*t/100, T)}
+econ <- function(t) {econ = exp(-1*b*t^2)}
+consumption <- function(k, t) {k*exp(g*t)}
+utility <- function(c) {(c^(1-n))/(1-n)}
+discount_rate <- o + n*g
+# Build data frames for each scenario
+T_00 <- data.frame(temp_increase = T_low,
+                   year = t,
+                   temp = temp(t, T_low)) %>% 
+  mutate(economy = econ(temp)) %>% 
+  mutate(consumption = consumption(economy, year)) %>% 
+  mutate(utility = utility(consumption)) %>% 
+  mutate(pv_utility = utility/(1+discount_rate)^year)
+
+T_04.4 <- data.frame(temp_increase = T_bau,
+                   year = t,
+                   temp = temp(t, T_bau)) %>% 
+  mutate(economy = econ(temp)) %>% 
+  mutate(consumption = consumption(economy, year)) %>% 
+  mutate(utility = utility(consumption)) %>% 
+  mutate(pv_utility = utility/(1+discount_rate)^year) %>% 
+  data.frame(T_00$pv_utility) %>% 
+  mutate(pct_change = (pv_utility - T_00.pv_utility)/T_00.pv_utility*100)
+
+L_b <- data.frame(sum(T_04.4$T_00.pv_utility),
+                           sum(T_04.4$pv_utility)) %>%
+  rename(pv_utility_base = sum.T_04.4.T_00.pv_utility.,
+         pv_utility_bau = sum.T_04.4.pv_utility.) %>%
+  mutate(L_b = (pv_utility_bau - pv_utility_base)/pv_utility_base) %>%
+  mutate(L = L$L) %>%
+  mutate(elasticity = .1/(L_b-L/L))
+```
+
+
+10% increase in T_bau
+```{r}
+# Assign values
+T_low <- 0
+T_med <- 2
+T_high <- 8
+T_bau <- 4.4*1.1
+t <- 0:200
+o <- 0.005
+n <- .5
+g <- .01
+b <- .05
+# Build functions in this chunk
+temp <- function(t, T) {temp = pmin(T*t/100, T)}
+econ <- function(t) {econ = exp(-1*b*t^2)}
+consumption <- function(k, t) {k*exp(g*t)}
+utility <- function(c) {(c^(1-n))/(1-n)}
+discount_rate <- o + n*g
+# Build data frames for each scenario
+T_00 <- data.frame(temp_increase = T_low,
+                   year = t,
+                   temp = temp(t, T_low)) %>% 
+  mutate(economy = econ(temp)) %>% 
+  mutate(consumption = consumption(economy, year)) %>% 
+  mutate(utility = utility(consumption)) %>% 
+  mutate(pv_utility = utility/(1+discount_rate)^year)
+
+T_04.4 <- data.frame(temp_increase = T_bau,
+                   year = t,
+                   temp = temp(t, T_bau)) %>% 
+  mutate(economy = econ(temp)) %>% 
+  mutate(consumption = consumption(economy, year)) %>% 
+  mutate(utility = utility(consumption)) %>% 
+  mutate(pv_utility = utility/(1+discount_rate)^year) %>% 
+  data.frame(T_00$pv_utility) %>% 
+  mutate(pct_change = (pv_utility - T_00.pv_utility)/T_00.pv_utility*100)
+
+L_t <- data.frame(sum(T_04.4$T_00.pv_utility),
+                           sum(T_04.4$pv_utility)) %>%
+  rename(pv_utility_base = sum.T_04.4.T_00.pv_utility.,
+         pv_utility_bau = sum.T_04.4.pv_utility.) %>%
+  mutate(L_t = (pv_utility_bau - pv_utility_base)/pv_utility_base) %>%
+  mutate(L = L$L) %>%
+  mutate(elasticity = .1/(L_t-L/L))
+```
+
+
+
+2.c. 
+
+
 
 
 
