@@ -14,6 +14,7 @@ library(janitor)
 library(lubridate)
 library(chron)
 library(stringr)
+library(pracma)
 ```
 
 Equations:
@@ -103,7 +104,9 @@ ggplot()+
   theme(plot.title = element_text(
     family = "Times",
     face = "bold",
-    size = 12))
+    size = 12),
+    legend.text = element_text(family = "Times"),
+    legend.title = element_text(family = "Times"))
 
 # Consumption
 ggplot()+
@@ -119,7 +122,9 @@ ggplot()+
   theme(plot.title = element_text(
     family = "Times",
     face = "bold",
-    size = 12))
+    size = 12),
+    legend.text = element_text(family = "Times"),
+    legend.title = element_text(family = "Times"))
   
 # Utility
 ggplot()+
@@ -132,18 +137,17 @@ ggplot()+
   theme(plot.title = element_text(
     family = "Times",
     face = "bold",
-    size = 12))
+    size = 12),
+    legend.text = element_text(family = "Times"),
+    legend.title = element_text(family = "Times"))
 ```
-
-
 Formula for present value:
 net utility today = SUM[utility at year t / (1+discount_rate)^t] across all years
 
 
-
 Part 2.B.
 
-10% increase o
+10% increase in $\delta$
 ```{r}
 # Assign values
 T_low <- 0
@@ -186,12 +190,12 @@ L_o <- data.frame(sum(T_04.4$T_00.pv_utility),
          pv_utility_bau = sum.T_04.4.pv_utility.) %>%
   mutate(L_o = (pv_utility_bau - pv_utility_base)/pv_utility_base) %>%
   mutate(L = L$L) %>%
-  mutate(elasticity = .1/(L_o-L/L))
+  mutate(elasticity = .1/((L_o-L)/L))
 ```
 
+The delta elasticity of utility is `r L_o$elasticity`
 
-10% increase in n
-
+10% increase in $\eta$
 ```{r}
 # Assign values
 T_low <- 0
@@ -234,8 +238,11 @@ L_n <- data.frame(sum(T_04.4$T_00.pv_utility),
          pv_utility_bau = sum.T_04.4.pv_utility.) %>%
   mutate(L_n = (pv_utility_bau - pv_utility_base)/pv_utility_base) %>%
   mutate(L = L$L) %>%
-  mutate(elasticity = .1/(L_n-L/L))
+  mutate(elasticity = .1/((L_n-L)/L))
 ```
+
+The eta elasticity of utility is `r L_n$elasticity`
+
 
 10% increase in g
 ```{r}
@@ -280,12 +287,13 @@ L_g <- data.frame(sum(T_04.4$T_00.pv_utility),
          pv_utility_bau = sum.T_04.4.pv_utility.) %>%
   mutate(L_g = (pv_utility_bau - pv_utility_base)/pv_utility_base) %>%
   mutate(L = L$L) %>%
-  mutate(elasticity = .1/(L_g-L/L))
+  mutate(elasticity = .1/((L_g-L)/L))
 ```
 
+The gamma elasticity of utility is `r L_g$elasticity`
 
 
-10% increase in b
+10% increase in $\beta$
 ```{r}
 # Assign values
 T_low <- 0
@@ -328,9 +336,10 @@ L_b <- data.frame(sum(T_04.4$T_00.pv_utility),
          pv_utility_bau = sum.T_04.4.pv_utility.) %>%
   mutate(L_b = (pv_utility_bau - pv_utility_base)/pv_utility_base) %>%
   mutate(L = L$L) %>%
-  mutate(elasticity = .1/(L_b-L/L))
+  mutate(elasticity = .1/((L_b-L)/L))
 ```
 
+The beta elasticity of utility is `r L_b$elasticity`
 
 10% increase in T_bau
 ```{r}
@@ -375,16 +384,117 @@ L_t <- data.frame(sum(T_04.4$T_00.pv_utility),
          pv_utility_bau = sum.T_04.4.pv_utility.) %>%
   mutate(L_t = (pv_utility_bau - pv_utility_base)/pv_utility_base) %>%
   mutate(L = L$L) %>%
-  mutate(elasticity = .1/(L_t-L/L))
+  mutate(elasticity = .1/((L_t-L)/L))
 ```
 
-
+The temperature elasticity of utility is `r L_t$elasticity`
 
 2.c. 
+$\theta$
 
 
+```{r}
+# Assign values, back to the OG parameters
+T_low <- 0
+T_med <- 2
+T_high <- 8
+T_bau <- 4.4
+t <- 0:200
+o <- 0.005
+n <- .5
+g <- .01
+b <- .05
+```
+
+```{r}
+# Build functions in this chunk
+temp <- function(t, T) {temp = pmin(T*t/100, T)}
+econ <- function(t) {econ = exp(-1*b*t^2)}
+consumption <- function(k, t) {k*exp(g*t)}
+consumption_o <- function(k, t, theta) {k*(exp(g*t))*theta}
+utility <- function(c) {(c^(1-n))/(1-n)}
+discount_rate <- o + n*g
+theta <-  function(c4, c0, n) {((c4^(1-n))/c0)^(1/(1-n))}
+```
+
+```{r}
+# Build data frames for each scenario
+theta_01 <- fzero(fun = function(theta){((theta)^(1-n)*L$pv_utility_base) - L$pv_utility_bau}, x = 0)$x
+
+theta <- theta_01
+discount_rate <- o + n*g
+consumption <- function(k, t) {theta*(k*exp(g*t))}
 
 
+# Create data frame at T = 0 using the new consumption function and theta*
+# ------------------------------------------------------------------------
+T_00 <- data.frame(temp_increase = T_low,
+                   year = t,
+                   temp = temp(t, T_low)) %>% 
+  mutate(economy = econ(temp)) %>% 
+  mutate(consumption = consumption(economy, year)) %>% 
+  mutate(utility = utility(consumption)) %>% 
+  mutate(pv_utility = utility/(1+discount_rate)^year)
+# Sum the NPV of utility at T = 0 with theta* and compare with NPV of utility at T = 4.4 to double check
+# ---------------------------------------------------------------------------------------------------------
+theta_01 <- data.frame(sum(T_00$pv_utility),
+                       L$pv_utility_bau) %>% 
+  rename(utility_base = sum.T_00.pv_utility.) %>% 
+  rename(utility_bau = L.pv_utility_bau)
+
+```
+
+Society is willing to give up `r theta` of their consumption every year for the next 200 years in order to completely prevent climate change. 
+
+
+```{r}
+# Question 2d - Goal: Identify the value of theta (theta*) at which the present value of utility at T = 0 is equal to the present value of utiity at e(T) ~ 4.2. First, calculate the expected value of T. Assign theta a value of 1. 
+# -----------------------------------------------------------------------
+T_exp <- 2*.2 + 4*.5 + 6*.3
+theta <- 1
+# Create data frame for T = e(T) ~ 4.2
+# -------------------------------------
+T_exp_01 <- data.frame(temp_increase = T_exp,
+                   year = t,
+                   temp = temp(t, T_exp)) %>% 
+  mutate(economy = econ(temp)) %>% 
+  mutate(consumption = consumption(economy, year)) %>% 
+  mutate(utility = utility(consumption)) %>% 
+  mutate(pv_utility = utility/(1+discount_rate)^year)
+# Sum the pv of utility at e(T)
+# -----------------------------
+T_exp_sum <- data.frame(sum(T_exp_01$pv_utility)) %>% 
+  rename(utility_exp = sum.T_exp_01.pv_utility.)
+```
+
+```{r}
+# Question 2d continued
+# ---------------------
+# Anthony's solution to 2c (Need to better understand how Anthony derived this function)
+# --------------------------------------------------------------------------------------
+theta_star_02 <- fzero(fun = function(theta) {((theta)^(1-n)*L$pv_utility_base) - T_exp_sum$utility_exp}, 
+                       x = 0)$x
+# Assign new value to theta
+# -------------------------
+theta <- theta_star_02
+# Create data frame for T = 0 using the new consumption function and theta*
+# -------------------------------------------------------------------------
+T_00 <- data.frame(temp_increase = T_low,
+                   year = t,
+                   temp = temp(t, T_low)) %>% 
+  mutate(economy = econ(temp)) %>% 
+  mutate(consumption = consumption(economy, year)) %>% 
+  mutate(utility = utility(consumption)) %>% 
+  mutate(pv_utility = utility/(1+discount_rate)^year)
+# Sum the PV of utility at T = 0 with theta* and compare with NPV of utility at T = 4.4 to ensure accuracy
+# ---------------------------------------------------------------------------------------------------------
+theta_02 <- data.frame(sum(T_00$pv_utility),
+                       T_exp_sum$utility_exp) %>% 
+  rename(utility_base = sum.T_00.pv_utility.) %>% 
+  rename(utility_bau = T_exp_sum.utility_exp)
+```
+
+Under uncertainty over T, society is willing to give up `r theta` of their consumption every year for the next 200 years in order to completely prevent climate change. 
 
 
 
