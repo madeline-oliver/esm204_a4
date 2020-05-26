@@ -190,10 +190,12 @@ L_o <- data.frame(sum(T_04.4$T_00.pv_utility),
          pv_utility_bau = sum.T_04.4.pv_utility.) %>%
   mutate(L_o = (pv_utility_bau - pv_utility_base)/pv_utility_base) %>%
   mutate(L = L$L) %>%
-  mutate(elasticity = .1/((L_o-L)/L))
+  mutate(elasticity = .1/((L_o-L)/L)) %>%
+  mutate(pct_change_L = elasticity*.1)
 ```
 
 The delta elasticity of utility is `r L_o$elasticity`
+The pct change in L is `r L_o$pct_change_L` 
 
 10% increase in $\eta$
 ```{r}
@@ -238,10 +240,12 @@ L_n <- data.frame(sum(T_04.4$T_00.pv_utility),
          pv_utility_bau = sum.T_04.4.pv_utility.) %>%
   mutate(L_n = (pv_utility_bau - pv_utility_base)/pv_utility_base) %>%
   mutate(L = L$L) %>%
-  mutate(elasticity = .1/((L_n-L)/L))
+  mutate(elasticity = .1/((L_n-L)/L))%>%
+  mutate(pct_change_L = elasticity*.1)
 ```
 
 The eta elasticity of utility is `r L_n$elasticity`
+The pct change in L is `r L_n$pct_change_L` 
 
 
 10% increase in g
@@ -287,10 +291,12 @@ L_g <- data.frame(sum(T_04.4$T_00.pv_utility),
          pv_utility_bau = sum.T_04.4.pv_utility.) %>%
   mutate(L_g = (pv_utility_bau - pv_utility_base)/pv_utility_base) %>%
   mutate(L = L$L) %>%
-  mutate(elasticity = .1/((L_g-L)/L))
+  mutate(elasticity = .1/((L_g-L)/L))%>%
+  mutate(pct_change_L = elasticity*.1)
 ```
 
 The gamma elasticity of utility is `r L_g$elasticity`
+The pct change in L is `r L_g$pct_change_L` 
 
 
 10% increase in $\beta$
@@ -336,10 +342,12 @@ L_b <- data.frame(sum(T_04.4$T_00.pv_utility),
          pv_utility_bau = sum.T_04.4.pv_utility.) %>%
   mutate(L_b = (pv_utility_bau - pv_utility_base)/pv_utility_base) %>%
   mutate(L = L$L) %>%
-  mutate(elasticity = .1/((L_b-L)/L))
+  mutate(elasticity = .1/((L_b-L)/L)) %>%
+  mutate(pct_change_L = elasticity*.1)
 ```
 
 The beta elasticity of utility is `r L_b$elasticity`
+The pct change in L is `r L_b$pct_change_L` 
 
 10% increase in T_bau
 ```{r}
@@ -384,14 +392,15 @@ L_t <- data.frame(sum(T_04.4$T_00.pv_utility),
          pv_utility_bau = sum.T_04.4.pv_utility.) %>%
   mutate(L_t = (pv_utility_bau - pv_utility_base)/pv_utility_base) %>%
   mutate(L = L$L) %>%
-  mutate(elasticity = .1/((L_t-L)/L))
+  mutate(elasticity = .1/((L_t-L)/L))%>%
+  mutate(pct_change_L = elasticity*.1)
 ```
 
 The temperature elasticity of utility is `r L_t$elasticity`
+The pct change in L is `r L_t$pct_change_L` 
 
 2.c. 
-$\theta$
-
+$\theta$-
 
 ```{r}
 # Assign values, back to the OG parameters
@@ -444,7 +453,7 @@ theta_01 <- data.frame(sum(T_00$pv_utility),
 
 ```
 
-Society is willing to give up `r theta` of their consumption every year for the next 200 years in order to completely prevent climate change. 
+When we are certain that under business as usual, T = 4.4, society is willing to give up `r theta` of their consumption every year for the next 200 years in order to completely prevent climate change. 
 
 
 ```{r}
