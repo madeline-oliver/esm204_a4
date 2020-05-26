@@ -430,7 +430,7 @@ theta <-  function(c4, c0, n) {((c4^(1-n))/c0)^(1/(1-n))}
 # Build data frames for each scenario
 theta_01 <- fzero(fun = function(theta){((theta)^(1-n)*L$pv_utility_base) - L$pv_utility_bau}, x = 0)$x
 
-theta <- theta_01
+theta <- 1-theta_01
 discount_rate <- o + n*g
 consumption <- function(k, t) {theta*(k*exp(g*t))}
 
@@ -457,35 +457,77 @@ When we are certain that under business as usual, T = 4.4, society is willing to
 
 
 ```{r}
-# Question 2d - Goal: Identify the value of theta (theta*) at which the present value of utility at T = 0 is equal to the present value of utiity at e(T) ~ 4.2. First, calculate the expected value of T. Assign theta a value of 1. 
-# -----------------------------------------------------------------------
-T_exp <- 2*.2 + 4*.5 + 6*.3
+# # Question 2d - Goal: Identify the value of theta (theta*) at which the present value of utility at T = 0 is equal to the present value of utiity at e(T) ~ 4.2. First, calculate the expected value of T. Assign theta a value of 1. 
+# # -----------------------------------------------------------------------
+# T_exp <- 2*.2 + 4*.5 + 6*.3
+# theta <- 1
+# # Create data frame for T = e(T) ~ 4.2
+# # -------------------------------------
+# T_exp_01 <- data.frame(temp_increase = T_exp,
+#                    year = t,
+#                    temp = temp(t, T_exp)) %>% 
+#   mutate(economy = econ(temp)) %>% 
+#   mutate(consumption = consumption(economy, year)) %>% 
+#   mutate(utility = utility(consumption)) %>% 
+#   mutate(pv_utility = utility/(1+discount_rate)^year)
+# # Sum the pv of utility at e(T)
+# # -----------------------------
+# T_exp_sum <- data.frame(sum(T_exp_01$pv_utility)) %>% 
+#   rename(utility_exp = sum.T_exp_01.pv_utility.)
+```
+
+```{r}
 theta <- 1
+T_exp <- 2
 # Create data frame for T = e(T) ~ 4.2
 # -------------------------------------
-T_exp_01 <- data.frame(temp_increase = T_exp,
+T_exp_2 <- data.frame(temp_increase = T_exp,
                    year = t,
                    temp = temp(t, T_exp)) %>% 
   mutate(economy = econ(temp)) %>% 
   mutate(consumption = consumption(economy, year)) %>% 
   mutate(utility = utility(consumption)) %>% 
   mutate(pv_utility = utility/(1+discount_rate)^year)
-# Sum the pv of utility at e(T)
-# -----------------------------
-T_exp_sum <- data.frame(sum(T_exp_01$pv_utility)) %>% 
-  rename(utility_exp = sum.T_exp_01.pv_utility.)
+
+T_exp <- 4
+T_exp_4 <- data.frame(temp_increase = T_exp,
+                   year = t,
+                   temp = temp(t, T_exp)) %>% 
+  mutate(economy = econ(temp)) %>% 
+  mutate(consumption = consumption(economy, year)) %>% 
+  mutate(utility = utility(consumption)) %>% 
+  mutate(pv_utility = utility/(1+discount_rate)^year)
+
+T_exp <- 6
+T_exp_6 <- data.frame(temp_increase = T_exp,
+                   year = t,
+                   temp = temp(t, T_exp)) %>% 
+  mutate(economy = econ(temp)) %>% 
+  mutate(consumption = consumption(economy, year)) %>% 
+  mutate(utility = utility(consumption)) %>% 
+  mutate(pv_utility = utility/(1+discount_rate)^year)
+
+T_exp_sum <- data.frame(sum(T_exp_2$pv_utility)) %>% 
+  rename(utility_exp_2 = sum.T_exp_2.pv_utility.) %>%
+  data.frame(sum(T_exp_4$pv_utility)) %>% 
+  rename(utility_exp_4 = sum.T_exp_4.pv_utility.) %>%
+  data.frame(sum(T_exp_6$pv_utility)) %>% 
+  rename(utility_exp_6 = sum.T_exp_6.pv_utility.) %>%
+  mutate(utility_exp = utility_exp_2*.2 + utility_exp_4*.5 + utility_exp_6*.3)
+
 ```
+
 
 ```{r}
 # Question 2d continued
 # ---------------------
-# Anthony's solution to 2c (Need to better understand how Anthony derived this function)
+# Anthony's solution to 2c 
 # --------------------------------------------------------------------------------------
 theta_star_02 <- fzero(fun = function(theta) {((theta)^(1-n)*L$pv_utility_base) - T_exp_sum$utility_exp}, 
                        x = 0)$x
 # Assign new value to theta
 # -------------------------
-theta <- theta_star_02
+theta <- 1-theta_star_02
 # Create data frame for T = 0 using the new consumption function and theta*
 # -------------------------------------------------------------------------
 T_00 <- data.frame(temp_increase = T_low,
